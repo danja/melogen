@@ -1,0 +1,18 @@
+{
+  "name": "melogen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Interactive genetic-algorithm melody and bassline generator, a PWA that plays through a Jig plugin",
+  "engines": { "node": ">=20.11.0" },
+  "scripts": {
+    "test": "vitest run",
+    "serve": "node server/serve.js",
+    "check:size": "node bin/check-size.js"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.0"
+  }
+}

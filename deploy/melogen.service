@@ -1,0 +1,43 @@
+# deploy/melogen.service
+#
+# Install to /etc/systemd/system/melogen.service, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now melogen
+#
+# Binds to loopback only; nginx publishes it at https://strandz.it/melogen/
+# (deploy/nginx/melogen.conf). Nothing but nginx should be able to reach it.
+#
+# Update: git pull in WorkingDirectory, then `sudo systemctl restart melogen`.
+# The server hashes the app files when it starts and the service worker's cache
+# version follows that hash, so there is no build step and no cache to bump.
+#
+# Logs: journalctl -u melogen -f
+
+[Unit]
+Description=Melogen
+Documentation=https://strandz.it/melogen/
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/home/github/melogen
+Environment=NODE_ENV=production
+Environment=PORT=47219
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/node server/serve.js
+Restart=on-failure
+RestartSec=5
+
+# Serves static files and needs nothing else.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

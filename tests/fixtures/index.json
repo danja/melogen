@@ -1,0 +1,238 @@
+{
+ "plugins": [
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/8b8/",
+   "label": "8-Bit 8asterd",
+   "comment": "Three AY-3-8910 chips under the 8b8 firmware, running unmodified as WebAssembly. Nine voices across three chips, hardware envelopes, a percussion set on channel 10, and the firmware's own vibrato, tremolo, arpeggiator, buzzy bass, circuit bending and ten tuning temperaments.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "Nine voices across three chips, and the tenth note steals the oldest rather than being refused. Percussion and pitched notes come out of the same nine.",
+    "Percussion is MIDI channel 10, notes 35 to 59. Pitched notes are 24 to 96 on any other channel, and anything outside that is ignored rather than transposed into range.",
+    "Every control answers to a MIDI CC as well, one controller per port as the profile's midi:binding declarations say, which is what the hardware does. A host automating a parameter and a controller sending its CC will fight.",
+    "Roll and Retrigger are positions on an exponential curve from about 1.5Hz to 45Hz rather than a rate in hertz. The figure shown is the one the device's own panel shows.",
+    "The firmware's EEPROM is a scratch array that is never persisted. Its SAVE command has nowhere to write, and settings belong in the project graph instead."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/boost/",
+   "label": "Boost",
+   "comment": "A gain stage in C++, the minimal starting point for a WebAssembly Jig: everything in boost.cpp beyond jig_process is ABI wiring, meant to be copied.",
+   "web": true,
+   "roles": [
+    "AudioEffect",
+    "Utility"
+   ],
+   "accepts": [
+    "Audio"
+   ],
+   "requires": [],
+   "cautions": []
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/canticle/",
+   "label": "Canticle",
+   "comment": "Twelve-voice polyphonic tonal instrument for the middle of an ensemble: keys, reed, pad, pluck and glass tones for melody, counterpoint and chords.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi",
+    "MelodyMidi",
+    "HarmonyMidi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "Twelve voices. A thirteenth note steals the oldest, releasing voices first, rather than being refused.",
+    "A velocity-100 single note reaches at least -10 dBFS at the default setting on every model; dense chords stay bounded through the final soft clip.",
+    "CC 120 and 123 silence every voice, like an all-notes-off."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/drumkit/",
+   "label": "DrumKit",
+   "comment": "Eleven voice synthesised drum instrument. MIDI notes trigger the voices, the master bus adds crush, drive and room, and per-instrument mutes cut voices immediately.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "DrumInstrument"
+   ],
+   "accepts": [
+    "Midi",
+    "DrumMidi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "One-shot voices: note-offs do nothing, and a hit cannot be choked except the open hat, which a closed hat cuts short.",
+    "CC 120 and 123 reset every voice and the master bus, like an all-notes-off.",
+    "The eleven trig outputs the native wrapper exposes as UI LEDs are not parameters here and have no panel control."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/ferrite/",
+   "label": "Ferrite",
+   "comment": "A neural amp model (nam-rs, MIT, ported from and validated against the reference Python and C++ implementations) in series with an impulse response, a cabinet or a room of up to 2.7 seconds, by partitioned FFT convolution. The amp can be switched off to use it as a convolution reverb, and Mix blends the convolved signal with the dry one. Ships a small example .nam and a synthetic (not captured) cabinet IR; both jig:asset resources are meant to be replaced with your own.",
+   "web": true,
+   "roles": [
+    "AudioEffect"
+   ],
+   "accepts": [
+    "Audio"
+   ],
+   "requires": [],
+   "cautions": [
+    "The neural model and the cabinet impulse response are both loaded at the sample rate they were captured or trained at, 48 kHz for the example model here. This plugin does not resample: a host running at a different rate gets a load that reports a mismatch (see the module's own jig_load_nam and jig_load_ir return codes) rather than silently wrong output.",
+    "The shipped impulse response is synthetic, generated for this example, not a real cabinet capture.",
+    "One amp model, run on the mean of both input channels: an amp is a mono device, and a real capture is too heavy to run twice.",
+    "Impulse responses are normalised to unit energy, so a response sets the tone and not the level. Stereo responses are mixed to mono.",
+    "Needs WebAssembly SIMD, which every current browser has. The native adapter's interpreter does not, and could not run a real capture in real time if it did.",
+    "Light runs the smallest network of a slimmable .nam, about a seventh of the work and a little less detailed, for a phone or a busy session. A .nam that is not slimmable has one network and ignores it."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/melgen/",
+   "label": "MelGen",
+   "comment": "Transport synced phrase-aware melody generator. Period, contour and answer shape a seeded line that plays in time with the session, follows an incoming line when asked, and answers Conductor CCs.",
+   "web": true,
+   "roles": [
+    "MidiGenerator"
+   ],
+   "accepts": [
+    "Midi",
+    "ControlMidi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents",
+    "http://purl.org/stuff/jigdaw/MidiOut",
+    "HostTransport"
+   ],
+   "cautions": [
+    "Silent until the host transport is rolling and reports a tempo and a beat position. A generator with no idea what time it is would be guessing, and this one says so by producing nothing.",
+    "Pure MIDI, no audio: route its MIDI output to an instrument. New, Notes and Rhythm are triggers that fire on the rising edge, so each press is one action.",
+    "Monophonic by design. A new note ends the note before it rather than overlapping."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/moka/",
+   "label": "Moka",
+   "comment": "A stereo MIDI synth built on modal synthesis: each voice is a bank of eight damped sine modes struck by a short mallet transient, giving xylophone, glockenspiel, woodblock, glass bowl, metal sheet and tube voices.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "Follows per-channel pitch bend (2 semitones, or the range set by RPN 0), so Retune can drive it microtonally. Ported from the Downspout VST3 of the same name; its factory presets and panel are not carried over.",
+    "Declares no jig:module and so no jig:abi. A host that loads a module directly, such as the native adapter, cannot load this plugin; a JavaScript AudioWorklet host can."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/monochord/",
+   "label": "Monochord",
+   "comment": "Eight-voice waveguide string, plucked, bowed or hammered: a delay line closed into a tuned loop with damping, stiffness, a pickup comb and a small body.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "A ninth note steals the quietest voice rather than being refused.",
+    "Exciter changes apply to the next note. A note already sounding keeps the exciter it started with.",
+    "The bow keeps sounding while the key is held and its level follows the note velocity; Hardness does not affect it.",
+    "Stiffness above about 0.7 detunes the upper partials audibly on a low note (partial 6 is +3 cents at 0.5, +20 at 0.7, +62 at 0.9)."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/mop/",
+   "label": "Mop",
+   "comment": "Eighteen voice OPL3 FM General MIDI instrument, capped at eight voices by default, based on mop by M. Glargaard. The AdLib Sound Blaster sound of DOS-era games: FM timbres from mop's own bank, a drum kit on channel 10, and every control answering to a MIDI CC.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "Eight voices by default out of the eighteen the chip has. A ninth note steals the oldest voice rather than being refused; raise Voices toward eighteen for dense arrangements.",
+    "Percussion is MIDI channel 10, notes 35 to 81. Pitched notes play on any other channel.",
+    "The Program control sets the instrument on every melodic channel at once, which is how presets are auditioned. An incoming program change overrides a single channel without moving the panel.",
+    "Every control but Program answers to a MIDI CC as well, one controller per port as the profile's midi:binding declarations say. A host automating a parameter and a controller sending its CC will fight.",
+    "Channel volume, expression, pan, sustain and pitch bend arrive as MIDI on each channel and are not panel controls: CC 7, 11, 10 and 64 behave as mop does."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/pulse/",
+   "label": "Pulse",
+   "comment": "Eight voice subtractive synthesiser with saw, square and triangle oscillators, a one-pole lowpass and an attack-release envelope.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents"
+   ],
+   "cautions": [
+    "Eight voices. A ninth note steals the oldest voice rather than being refused."
+   ]
+  },
+  {
+   "iri": "https://strandz.it/jigdaw/plugins/sam/",
+   "label": "Sam",
+   "comment": "Software Automatic Mouth, the 1982 Commodore 64 formant speech synthesiser, as an instrument: typed text is spoken either one word per MIDI note, sung at the pitch of the key, or one word per step from a start bar, locked to the host transport.",
+   "web": true,
+   "roles": [
+    "Instrument",
+    "AudioInstrument"
+   ],
+   "accepts": [
+    "Midi"
+   ],
+   "requires": [
+    "http://purl.org/stuff/jigdaw/MidiEvents",
+    "HostTransport"
+   ],
+   "cautions": [
+    "Transport mode is silent while the host is stopped (use Speak to audition) and when the host gives no beat position. Keys mode ignores the transport.",
+    "The words are a jig:asset the person replaces with a plain text file of their own, up to 2000 printable ASCII characters and 512 words, and are saved with the session. A lone _ is a rest. Phonetic reads SAM phoneme codes, e.g. /HEH3LOW2 WER4LD.",
+    "SAM's code is vendored in third_party/ and has no licence (abandonware; see third_party/SAM-LICENSE.md). Whether it may be redistributed with this plugin is the repository owner's decision, recorded in HUMANS.md.",
+    "Ported from the Downspout VST3 of the same name. Not carried over: the six voice presets (set Speed, Pitch, Throat and Mouth by hand) and the Current Word read-out."
+   ]
+  }
+ ]
+}
