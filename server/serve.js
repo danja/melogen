@@ -7,15 +7,19 @@
 //   JIGDAW_PLUGINS=<dir>   also serve a local jigdaw plugins folder at /plugins/ (development only)
 
 import { createServer } from 'node:http'
-import { resolve } from 'node:path'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createShell } from './shell.js'
 import { createHandler } from './static.js'
+
+// Paths come from import.meta.url: the newer shortcut properties need Node 20.11, and the server may run on 18.
+const HERE = dirname(fileURLToPath(import.meta.url))
 
 export const DEFAULT_PORT = 47219
 export const DEFAULT_HOST = '127.0.0.1'
 
 export function startServer ({
-  root = resolve(import.meta.dirname, '..'),
+  root = resolve(HERE, '..'),
   port = DEFAULT_PORT,
   host = DEFAULT_HOST,
   live = false,
@@ -30,7 +34,7 @@ export function startServer ({
   })
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename)) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT ?? DEFAULT_PORT)
   const host = process.env.HOST ?? DEFAULT_HOST
   const log = line => console.log(`${new Date().toISOString()} ${line}`)

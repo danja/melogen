@@ -49,7 +49,7 @@ running app as `window.melogen` in the console.
 
 Served at `https://strandz.it/melogen/` by nginx in front of the Node server:
 
-1. Check out into `/home/github/melogen` (or edit `WorkingDirectory` in the unit).
+1. Needs Node 18 or newer (the server uses no newer APIs). Check out into `/home/github/melogen` (or edit `WorkingDirectory` in the unit).
 2. `sudo cp deploy/melogen.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now melogen`
 3. Include `deploy/nginx/melogen.conf` in the `server { server_name strandz.it; }` block and reload nginx.
 4. To update: `git pull`, then `sudo systemctl restart melogen`. The server hashes the app files at start and the service

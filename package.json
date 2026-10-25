@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "description": "Interactive genetic-algorithm melody and bassline generator, a PWA that plays through a Jig plugin",
-  "engines": { "node": ">=20.11.0" },
+  "engines": { "node": ">=18.0.0" },
   "scripts": {
     "test": "vitest run",
     "serve": "node server/serve.js",

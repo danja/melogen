@@ -1,6 +1,7 @@
 // Fails if any source file is over the line limit.
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 export const LIMIT = 500
 const ROOTS = ['src', 'server', 'bin']
@@ -27,7 +28,7 @@ export function oversize (root, limit = LIMIT) {
   return found
 }
 
-if (resolve(process.argv[1] ?? '') === resolve(import.meta.filename)) {
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const bad = oversize(process.cwd())
   for (const { file, lines } of bad) console.error(`${file}: ${lines} lines (limit ${LIMIT})`)
   process.exit(bad.length ? 1 : 0)
