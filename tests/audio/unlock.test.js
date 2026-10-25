@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { AudioEngine } from '../../src/audio/engine.js'
 import { installUnlock } from '../../src/audio/unlock.js'
 import { createMeter } from '../../src/audio/meter.js'
-import { diagnosticsText } from '../../src/diagnostics.js'
+import { diagnosticsText, describeBeep } from '../../src/diagnostics.js'
 import { loadPlugin } from '../../src/audio/jig-loader.js'
 import { InstrumentSession } from '../../src/audio/session.js'
 import { fakeContext, fakeNodeClass, fakeFetch, buildPlugin, fakeStorage } from './fakes.js'
@@ -236,5 +236,14 @@ describe('level meter and diagnostics', () => {
     expect(brave).toContain('(Brave)')
     expect(diagnosticsText({ engine: { context: null }, session: { status: { state: 'idle', message: '' }, iri: 'x', error: null, diagnostics: { dropped: 0, processorError: null } }, player: { posted: 0 }, win: { navigator: {}, isSecureContext: false } }))
       .toContain('not started yet')
+  })
+})
+
+describe('describeBeep', () => {
+  it('tells the three outcomes apart', () => {
+    expect(describeBeep({ started: false, state: 'suspended', advanced: false })).toMatch(/did not let audio start \(it is suspended\).*Brave/)
+    expect(describeBeep({ started: true, state: 'running', advanced: false })).toMatch(/clock is not moving.*no working audio output/)
+    expect(describeBeep({ started: true, state: 'running', advanced: true })).toMatch(/audio clock is running.*volume, a muted tab/)
+    expect(describeBeep({ started: false, state: undefined, advanced: false })).toMatch(/not created/)
   })
 })

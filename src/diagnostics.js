@@ -19,3 +19,17 @@ export function diagnosticsText ({ engine, session, player, win = window }) {
   ]
   return lines.join('\n')
 }
+
+/**
+ * What a test beep tells you. `started`: the browser let the audio context run;
+ * `advanced`: its clock moved afterwards (it does not when there is no working output).
+ */
+export function describeBeep ({ started, state, advanced }) {
+  if (!started) {
+    return `The browser did not let audio start (it is ${state ?? 'not created'}). It may be blocking sound for this site: check the site's sound permission and, in Brave, the Shields settings.`
+  }
+  if (!advanced) {
+    return 'Audio says it is running, but its clock is not moving, so the browser has no working audio output to play to. Check the output device the browser is using.'
+  }
+  return 'The beep was sent to your audio output and the audio clock is running. If you heard nothing, the sound is being lost after the browser: volume, a muted tab, or the wrong output device.'
+}

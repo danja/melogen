@@ -81,7 +81,10 @@ button, input, select { font: inherit; color: inherit; }
 
 .masthead { padding: 1.25rem 0 0.75rem; }
 .masthead h1 { margin: 0; font-size: 1.6rem; letter-spacing: 0.01em; }
+.masthead .subtitle { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .masthead p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.masthead a { color: var(--muted); font-size: 0.95rem; padding: 0.25rem 0; }
+.masthead a:hover { color: var(--text); }
 
 .tablist {
   display: flex;
@@ -278,3 +281,4 @@ button, input, select { font: inherit; color: inherit; }
 .level-label { display: flex; align-items: center; gap: 0.6rem; }
 .level-label meter { flex: 1; height: 1rem; }
 .diagnostics-text { white-space: pre-wrap; overflow-wrap: anywhere; padding: 0.7rem; border-radius: 8px; background: var(--surface-2); font-size: 0.8rem; user-select: all; }
+.beep-status { min-height: 1.4rem; margin: 0.4rem 0; color: var(--text); }

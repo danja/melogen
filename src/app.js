@@ -1,6 +1,6 @@
 // Wires the controller, the instrument session and the views to a page.
 
-import { DEFAULT_PLUGIN, CATALOGUE_URL } from '../config.js'
+import { DEFAULT_PLUGIN, CATALOGUE_URL, REPO_URL } from '../config.js'
 import { AudioEngine } from './audio/engine.js'
 import { InstrumentSession } from './audio/session.js'
 import { Player } from './audio/player.js'
@@ -13,7 +13,7 @@ import { createInstrumentView } from './ui/instrument-view.js'
 import { downloadBytes } from './ui/download.js'
 import { attachKeyboard } from './keyboard.js'
 import { installUnlock } from './audio/unlock.js'
-import { diagnosticsText } from './diagnostics.js'
+import { diagnosticsText, describeBeep } from './diagnostics.js'
 
 /**
  * @param options { root, storage, search, win, fetchImpl, AudioContextImpl }
@@ -54,7 +54,14 @@ export function createApp ({
     onReset: () => session.resetValues(),
     onAudition: async () => { if (await session.ensure()) player.audition() },
     onEnable: () => { session.unlock(); session.ensure() },
-    onTestTone: () => engine.testTone()
+    onRefreshDiagnostics: () => refreshText(),
+    onTestTone: async () => {
+      const before = engine.context?.currentTime ?? 0
+      const started = await engine.testTone()
+      await new Promise(resolve => setTimeout(resolve, 500))
+      refreshText()
+      return describeBeep({ started, state: engine.context?.state, advanced: (engine.context?.currentTime ?? 0) > before + 0.2 })
+    }
   })
 
   const tabs = createTabs({
@@ -67,7 +74,11 @@ export function createApp ({
   })
 
   root.replaceChildren(
-    h('header', { class: 'masthead' }, h('h1', {}, 'Melogen'), h('p', {}, 'Breed melodies by ear')),
+    h('header', { class: 'masthead' },
+      h('h1', {}, 'Melogen'),
+      h('div', { class: 'subtitle' },
+        h('p', {}, 'Breed melodies by ear'),
+        h('a', { href: REPO_URL, target: '_blank', rel: 'noopener', 'aria-label': 'Melogen on GitHub (opens in a new tab)' }, 'GitHub'))),
     tabs.el)
 
   function render () {
@@ -87,13 +98,13 @@ export function createApp ({
 
   // The diagnostics refresh only while they are open.
   let diagnosticsTimer = null
-  function refreshDiagnostics () {
-    instrument.renderDiagnostics(diagnosticsText({ engine, session, player, win }), engine.level())
-  }
+  // The text is written on demand (open, Refresh, after a beep), never on a timer:
+  // rewriting it under the cursor would wipe any selection made to copy it.
+  const refreshText = () => instrument.renderDiagnostics(diagnosticsText({ engine, session, player, win }))
   instrument.onDiagnosticsToggle(open => {
     clearInterval(diagnosticsTimer)
-    diagnosticsTimer = open ? setInterval(refreshDiagnostics, 250) : null
-    if (open) refreshDiagnostics()
+    diagnosticsTimer = open ? setInterval(() => instrument.renderLevel(engine.level()), 250) : null
+    if (open) refreshText()
   })
 
   session.loadCatalogue()

@@ -31,7 +31,12 @@ const booted = []
 function boot (options = {}) {
   document.body.innerHTML = '<div id="app"></div>'
   class FakeAudioContext {
-    constructor () { Object.assign(this, fakeContext()) }
+    constructor () {
+      Object.assign(this, fakeContext())
+      const param = () => ({ value: 0, setValueAtTime () {}, linearRampToValueAtTime () {} })
+      this.createOscillator = () => ({ frequency: param(), connect () {}, start () {}, stop () {} })
+      this.createGain = () => ({ gain: param(), connect () {}, disconnect () {} })
+    }
   }
   const app = createApp({ root: document.getElementById('app'), storage, search: '', win: window, fetchImpl, AudioContextImpl: FakeAudioContext, ...options })
   booted.push(app)
@@ -65,6 +70,29 @@ describe('app', () => {
     expect(document.querySelectorAll('.row:not([hidden])')).toHaveLength(5)
     expect(storage.map.get(PLUGIN_KEY)).toBe(DEFAULT_PLUGIN)
     expect(document.querySelector('.run-title').textContent).toBe('Generation 1')
+  })
+
+  it('links to the GitHub repository, to the right of the subtitle', () => {
+    boot()
+    const subtitle = document.querySelector('.masthead .subtitle')
+    expect(subtitle.firstElementChild.textContent).toBe('Breed melodies by ear')
+    const link = subtitle.querySelector('a')
+    expect(subtitle.lastElementChild).toBe(link)
+    expect(link.href).toBe('https://github.com/danja/melogen')
+    expect(link.textContent).toBe('GitHub')
+    expect(link.target).toBe('_blank')
+    expect(link.rel).toContain('noopener')
+  })
+
+  it('the test beep reports whether the audio clock moves', async () => {
+    const app = boot()
+    document.querySelector('#tab-instrument').click()
+    const button = [...document.querySelectorAll('.diagnostics button')].find(b => b.textContent === 'Play a test beep')
+    button.click()
+    await until(() => !/Playing a beep/.test(document.querySelector('.beep-status').textContent), 'beep result')
+    // the fake context's clock never moves, which is exactly the "no working output" case
+    expect(document.querySelector('.beep-status').textContent).toMatch(/clock is not moving/)
+    expect(app.engine.context).not.toBeNull()
   })
 
   it('loads the catalogue into the instrument picker', async () => {

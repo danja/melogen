@@ -4,3 +4,6 @@
 
 export const DEFAULT_PLUGIN = 'https://strandz.it/jigdaw/plugins/monochord/'
 export const CATALOGUE_URL = 'https://strandz.it/jigdaw/plugins/index.json'
+
+// Linked from the page header.
+export const REPO_URL = 'https://github.com/danja/melogen'

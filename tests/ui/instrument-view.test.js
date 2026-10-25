@@ -174,15 +174,9 @@ describe('instrument view', () => {
 })
 
 describe('audio diagnostics', () => {
-  it('has a test beep that does not go through the instrument', () => {
-    const { view, handlers } = setup()
-    const beep = [...view.el.querySelectorAll('.diagnostics button')].find(b => b.textContent === 'Play a test beep')
-    beep.click()
-    expect(handlers.onTestTone).toHaveBeenCalledTimes(1)
-    expect(view.el.querySelector('.diagnostics').textContent).toMatch(/does not use the instrument/)
-  })
+  const find = (view, label) => [...view.el.querySelectorAll('.diagnostics button')].find(b => b.textContent === label)
 
-  it('opens on demand, reports toggles, and shows the text and level', () => {
+  it('opens on demand and reports toggles', () => {
     const { view } = setup()
     const toggles = []
     view.onDiagnosticsToggle(open => toggles.push(open))
@@ -192,13 +186,92 @@ describe('audio diagnostics', () => {
     details.open = false
     details.dispatchEvent(new Event('toggle'))
     expect(toggles).toEqual([true, false])
-    view.renderDiagnostics('audio: running', 0.42)
+  })
+
+  it('shows the text and the level, clamped', () => {
+    const { view } = setup()
+    view.renderDiagnostics('audio: running')
+    view.renderLevel(0.42)
     expect(view.el.querySelector('.diagnostics-text').textContent).toBe('audio: running')
     expect(view.el.querySelector('meter').value).toBeCloseTo(0.42)
-    view.renderDiagnostics('x', null)
+    view.renderLevel(null)
     expect(view.el.querySelector('meter').value).toBe(0)
-    view.renderDiagnostics('x', 7)
+    view.renderLevel(7)
     expect(view.el.querySelector('meter').value).toBe(1)
+  })
+
+  it('a level update never touches the text, so a selection made to copy it survives', () => {
+    const { view } = setup()
+    view.renderDiagnostics('audio: running')
+    const pre = view.el.querySelector('.diagnostics-text')
+    const node = pre.firstChild
+    for (let i = 0; i < 10; i++) view.renderLevel(i / 10)
+    expect(pre.firstChild).toBe(node)
+    view.renderDiagnostics('audio: running') // same text again
+    expect(pre.firstChild).toBe(node)
+    view.renderDiagnostics('audio: suspended')
+    expect(pre.textContent).toBe('audio: suspended')
+  })
+
+  it('the beep says it is playing, then shows what the app reports', async () => {
+    const { view, handlers } = setup()
+    let finish
+    handlers.onTestTone.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    find(view, 'Play a test beep').click()
+    const status = view.el.querySelector('.beep-status')
+    expect(status.textContent).toMatch(/Playing a beep/)
+    finish('The beep was sent.')
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(status.textContent).toBe('The beep was sent.')
+    expect(status.getAttribute('aria-live')).toBe('polite')
+  })
+
+  it('a beep that throws is reported, not swallowed', async () => {
+    const { view, handlers } = setup()
+    handlers.onTestTone.mockRejectedValue(new Error('no output'))
+    find(view, 'Play a test beep').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(view.el.querySelector('.beep-status').textContent).toBe('The beep failed: no output')
+  })
+
+  it('Refresh asks the app for fresh text', () => {
+    const { view, handlers } = setup()
+    handlers.onRefreshDiagnostics = vi.fn()
+    const again = createInstrumentView(handlers)
+    document.body.replaceChildren(again.el)
+    find(again, 'Refresh').click()
+    expect(handlers.onRefreshDiagnostics).toHaveBeenCalledTimes(1)
+    expect(view).toBeDefined()
+  })
+
+  it('Copy selects the text and puts it on the clipboard', async () => {
+    const { view } = setup()
+    view.renderDiagnostics('audio: running\nproblem: none')
+    const written = []
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async t => { written.push(t) } }, configurable: true })
+    const button = find(view, 'Copy')
+    button.click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(written).toEqual(['audio: running\nproblem: none'])
+    expect(button.textContent).toBe('Copied')
+    expect(window.getSelection().toString()).toBe('audio: running\nproblem: none')
+  })
+
+  it('Copy falls back to the old command, and says to press Ctrl+C if even that fails', async () => {
+    const { view } = setup()
+    view.renderDiagnostics('x')
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('denied') } }, configurable: true })
+    document.execCommand = vi.fn(() => true)
+    const button = find(view, 'Copy')
+    button.click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(document.execCommand).toHaveBeenCalledWith('copy')
+    expect(button.textContent).toBe('Copied')
+
+    document.execCommand = vi.fn(() => false)
+    button.click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(button.textContent).toBe('Selected: press Ctrl+C')
   })
 })
 

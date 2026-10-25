@@ -8,7 +8,7 @@ import { controlKind, sliderMap, formatValue } from '../audio/instrument.js'
 const CUSTOM = '__custom__'
 
 /**
- * @param handlers { onChoose(iri), onParam(symbol, value), onReset(), onAudition(), onEnable(), onTestTone() }
+ * @param handlers { onChoose(iri), onParam(symbol, value), onReset(), onAudition(), onEnable(), onTestTone() => message, onRefreshDiagnostics() }
  */
 export function createInstrumentView (handlers) {
   const status = h('p', { class: 'notice', role: 'status' })
@@ -27,17 +27,47 @@ export function createInstrumentView (handlers) {
   const reset = h('button', { class: 'action quiet', type: 'button', onClick: () => handlers.onReset() }, icon('reset'), ' Reset controls')
   const enable = h('button', { class: 'action primary', type: 'button', onClick: () => handlers.onEnable() }, 'Enable audio')
 
+  const beepStatus = h('p', { class: 'beep-status', role: 'status', 'aria-live': 'polite' })
+  const beep = h('button', { class: 'action', type: 'button' }, 'Play a test beep')
+  beep.addEventListener('click', async () => {
+    beepStatus.textContent = 'Playing a beep\u2026'
+    try {
+      beepStatus.textContent = (await handlers.onTestTone?.()) ?? ''
+    } catch (error) {
+      beepStatus.textContent = `The beep failed: ${error.message}`
+    }
+  })
+  const copy = h('button', { class: 'action', type: 'button' }, 'Copy')
+  const refresh = h('button', { class: 'action', type: 'button', onClick: () => handlers.onRefreshDiagnostics?.() }, 'Refresh')
   const diagnostics = h('details', { class: 'diagnostics' },
     h('summary', {}, 'Audio diagnostics'),
     h('p', { class: 'help' }, 'If there is no sound: the level bar should move while a melody plays. If it moves, the instrument is working and the sound is lost after it (volume, silent switch, output device). If it stays flat, the instrument is not producing sound.'),
-    h('div', { class: 'actions' }, h('button', { class: 'action', type: 'button', onClick: () => handlers.onTestTone?.() }, 'Play a test beep')),
-    h('p', { class: 'help' }, 'The beep does not use the instrument. If you cannot hear it either, the problem is the browser\u2019s audio output (volume, the tab being muted, the output device), not Melogen.'),
+    h('div', { class: 'actions' }, beep),
+    beepStatus,
+    h('p', { class: 'help' }, 'The beep does not use the instrument. If you cannot hear it either, the problem is the browser\u2019s audio output, not Melogen.'),
     h('label', { class: 'level-label' }, 'Output level ', h('meter', { min: 0, max: 1, value: 0, 'aria-label': 'Output level' })),
-    h('pre', { class: 'diagnostics-text', tabindex: '0' }))
+    h('pre', { class: 'diagnostics-text', tabindex: '0' }),
+    h('div', { class: 'actions' }, copy, refresh))
   const levelMeter = diagnostics.querySelector('meter')
   const diagnosticsText = diagnostics.querySelector('pre')
   const toggleListeners = []
   diagnostics.addEventListener('toggle', () => { for (const listener of toggleListeners) listener(diagnostics.open) })
+
+  // navigator.clipboard needs a secure page and permission; selecting the text and
+  // using the old command works where it does not, and the text is selected either way.
+  copy.addEventListener('click', async () => {
+    const range = document.createRange()
+    range.selectNodeContents(diagnosticsText)
+    const selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(range)
+    let copied = false
+    try { await navigator.clipboard.writeText(diagnosticsText.textContent); copied = true } catch {
+      try { copied = document.execCommand('copy') } catch { copied = false }
+    }
+    copy.textContent = copied ? 'Copied' : 'Selected: press Ctrl+C'
+    setTimeout(() => { copy.textContent = 'Copy' }, 2500)
+  })
 
   const el = h('section', { class: 'instrument' },
     h('div', { class: 'field' },
@@ -146,8 +176,10 @@ export function createInstrumentView (handlers) {
     el,
     render,
     onDiagnosticsToggle: listener => { toggleListeners.push(listener) },
-    renderDiagnostics (text, level) {
-      diagnosticsText.textContent = text
+    renderDiagnostics (text) {
+      if (diagnosticsText.textContent !== text) diagnosticsText.textContent = text
+    },
+    renderLevel (level) {
       levelMeter.value = Math.min(1, level ?? 0)
     }
   }
