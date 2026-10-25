@@ -10,7 +10,7 @@ Sounds will be played through a Jig plugin, default /home/danny/github/jigdaw/pl
 
 ## Usage
 
-Three tabs : one for settings : octave selector, number of bars (default 8), time signature (4/4), tempo (default 120 bpm), crossover rate, mutation rate; one for interaction; one for instrument settings.
+Three tabs : one for settings : octave selector, number of bars (default 4), time signature (4/4), tempo (default 120 bpm), crossover rate, mutation rate; one for interaction; one for instrument settings.
 
 The user is presented with 5 rows of buttons, each corresponding to a different melody. When the user presses Play (a green arrow icon), it plays the melody. Next to play are - 0 + buttons for voting, as well as a button for download. Clicking download will give the user a .mid file of the corresponding melody. 
 

@@ -127,7 +127,9 @@ describe('interact view', () => {
     data.rows[0].carried = true
     data.rows[0].rating = 1
     view.render(data)
-    expect(rows()[0].querySelector('.origin').textContent).toMatch(/kept/)
+    expect(rows()[0].querySelector('.origin').textContent).toBe('carried over')
+    expect(rows()[0].querySelector('.origin').title).toMatch(/carried over unchanged/)
+    expect(rows()[0].querySelector('.vote-up').getAttribute('aria-pressed')).toBe('true')
     expect(rows()[0].classList.contains('carried')).toBe(true)
   })
 

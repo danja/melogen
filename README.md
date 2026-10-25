@@ -15,7 +15,7 @@ It is a responsive PWA in vanilla ES modules, with no runtime dependencies and n
    **More** shows five more from the same generation (you hear five at a time out of twenty; the rest are estimated from
    how much they resemble what you have voted on). **Evolve** breeds the next generation. Keys: `1`–`5` play a row, then
    `-` `0` `+` vote on the one playing, `Space` stops.
-2. **Settings.** Melody or bass, key, scale, octave, bars (8), time signature (4/4), tempo (120), crossover rate,
+2. **Settings.** Melody or bass, key, scale, octave, bars (4), time signature (4/4), tempo (120), crossover rate,
    mutation rate, population size, loop. Changing the time signature starts a new population (it asks first).
 3. **Instrument.** Pick any instrument from the jigdaw catalogue, or paste the address of any Jig plugin. The controls are
    built from the plugin's own description. Your choice and its settings are remembered.

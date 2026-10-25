@@ -31,7 +31,7 @@ export class Population {
     const entry = this.entries[index]
     entry.rating = rating
     entry.voted = rating !== null
-    if (entry.voted) entry.carried = false
+    entry.carried = false // once the person has touched it, it is theirs
   }
 
   get ratedCount () { return this.entries.filter(e => e.rating !== null && !e.carried).length }

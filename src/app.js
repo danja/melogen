@@ -53,7 +53,8 @@ export function createApp ({
     onParam: (symbol, value) => session.setValue(symbol, value),
     onReset: () => session.resetValues(),
     onAudition: async () => { if (await session.ensure()) player.audition() },
-    onEnable: () => { session.unlock(); session.ensure() }
+    onEnable: () => { session.unlock(); session.ensure() },
+    onTestTone: () => engine.testTone()
   })
 
   const tabs = createTabs({

@@ -21,9 +21,9 @@ describe('settings view', () => {
     }
   })
 
-  it('shows the defaults: 8 bars, 4/4, 120 bpm', () => {
+  it('shows the defaults: 4 bars, 4/4, 120 bpm', () => {
     const { input } = setup()
-    expect(input('bars').value).toBe('8')
+    expect(input('bars').value).toBe('4')
     expect(input('timeSignature').value).toBe('4/4')
     expect(input('tempo').value).toBe('120')
     expect(input('crossoverRate').value).toBe('0.7')

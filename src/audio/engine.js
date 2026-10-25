@@ -63,6 +63,28 @@ export class AudioEngine {
     })
   }
 
+  /**
+   * A beep straight to the output, not through any plugin. If this is silent
+   * the fault is the browser's audio output, not the instrument. Call inside a tap.
+   */
+  testTone (seconds = 0.5) {
+    const context = this.ensureContext()
+    const started = this.unlock()
+    const now = context.currentTime
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    oscillator.frequency.value = 440
+    gain.gain.setValueAtTime(0, now)
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.02)
+    gain.gain.setValueAtTime(0.15, now + seconds - 0.05)
+    gain.gain.linearRampToValueAtTime(0, now + seconds)
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start(now)
+    oscillator.stop(now + seconds)
+    return started
+  }
+
   get running () { return this.context?.state === 'running' }
 
   /** What the player needs, or null while no instrument is loaded. */

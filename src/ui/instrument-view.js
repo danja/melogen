@@ -8,7 +8,7 @@ import { controlKind, sliderMap, formatValue } from '../audio/instrument.js'
 const CUSTOM = '__custom__'
 
 /**
- * @param handlers { onChoose(iri), onParam(symbol, value), onReset(), onAudition(), onEnable() }
+ * @param handlers { onChoose(iri), onParam(symbol, value), onReset(), onAudition(), onEnable(), onTestTone() }
  */
 export function createInstrumentView (handlers) {
   const status = h('p', { class: 'notice', role: 'status' })
@@ -30,6 +30,8 @@ export function createInstrumentView (handlers) {
   const diagnostics = h('details', { class: 'diagnostics' },
     h('summary', {}, 'Audio diagnostics'),
     h('p', { class: 'help' }, 'If there is no sound: the level bar should move while a melody plays. If it moves, the instrument is working and the sound is lost after it (volume, silent switch, output device). If it stays flat, the instrument is not producing sound.'),
+    h('div', { class: 'actions' }, h('button', { class: 'action', type: 'button', onClick: () => handlers.onTestTone?.() }, 'Play a test beep')),
+    h('p', { class: 'help' }, 'The beep does not use the instrument. If you cannot hear it either, the problem is the browser\u2019s audio output (volume, the tab being muted, the output device), not Melogen.'),
     h('label', { class: 'level-label' }, 'Output level ', h('meter', { min: 0, max: 1, value: 0, 'aria-label': 'Output level' })),
     h('pre', { class: 'diagnostics-text', tabindex: '0' }))
   const levelMeter = diagnostics.querySelector('meter')

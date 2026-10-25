@@ -108,7 +108,8 @@ export class Controller {
     const index = this.population.rows[position]
     if (index === undefined) return
     const current = this.population.entries[index].rating
-    this.population.rate(index, current === rating && this.population.entries[index].voted ? null : rating)
+    // A pressed button clears when pressed again, whether the person or a carried-over elite set it.
+    this.population.rate(index, current === rating ? null : rating)
     this.emit()
   }
 

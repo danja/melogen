@@ -11,7 +11,7 @@ it is built.
 ## 1. Constraints from the idea
 
 - One instrument and one voice: a single line, whether melody or bass.
-- Settings: octave, bars (default 8), time signature (default 4/4), tempo (default 120 bpm), crossover rate, mutation rate.
+- Settings: octave, bars (default 4), time signature (default 4/4), tempo (default 120 bpm), crossover rate, mutation rate.
   These were added after the idea was discussed: **key root**, **scale** and a **Melody/Bass mode**.
 - Each round shows 5 rows. A row has Play, three vote buttons (− 0 +) and Download (.mid).
 - The population is **bigger than the 5 rows**. Melodies the user has not rated get an estimated fitness.

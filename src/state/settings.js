@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   root: 0,
   scale: 'major',
   octave: MODES.melody.octave,
-  bars: 8,
+  bars: 4,
   timeSignature: '4/4',
   tempo: 120,
   crossoverRate: 0.7,

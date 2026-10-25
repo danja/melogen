@@ -90,6 +90,45 @@ describe('starting audio', () => {
   })
 })
 
+describe('test beep', () => {
+  function toneContext () {
+    const made = { oscillator: null, gain: null }
+    const ramps = []
+    const context = {
+      ...lockedContext(),
+      state: 'running',
+      currentTime: 2,
+      createOscillator: () => (made.oscillator = { frequency: { value: 0 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn() }),
+      createGain: () => (made.gain = { gain: { setValueAtTime: (v, t) => ramps.push(['set', v, t]), linearRampToValueAtTime: (v, t) => ramps.push(['ramp', v, t]) }, connect: vi.fn() })
+    }
+    return { context, made, ramps }
+  }
+
+  it('plays 440 Hz straight to the output, quietly, with a fade in and out', async () => {
+    const { context, made, ramps } = toneContext()
+    const engine = engineWith(context)
+    expect(await engine.testTone(0.5)).toBe(true)
+    expect(made.oscillator.frequency.value).toBe(440)
+    expect(made.oscillator.start).toHaveBeenCalledWith(2)
+    expect(made.oscillator.stop).toHaveBeenCalledWith(2.5)
+    expect(made.gain.connect).toHaveBeenCalledWith(context.destination)
+    expect(made.oscillator.connect).toHaveBeenCalledWith(made.gain)
+    const levels = ramps.map(r => r[1])
+    expect(Math.max(...levels)).toBeLessThanOrEqual(0.2)
+    expect(levels[0]).toBe(0)
+    expect(levels.at(-1)).toBe(0)
+  })
+
+  it('also tries to start a locked context, and reports false if the browser refuses', async () => {
+    const { context } = toneContext()
+    context.state = 'suspended'
+    context.createOscillator = lockedContext().createBufferSource
+    const engine = engineWith({ ...context, createOscillator: () => ({ frequency: {}, connect () {}, start () {}, stop () {} }), createGain: () => ({ gain: { setValueAtTime () {}, linearRampToValueAtTime () {} }, connect () {} }) })
+    expect(context.resume).toBeDefined()
+    expect(await engine.testTone(0.1)).toBe(false)
+  })
+})
+
 describe('installUnlock', () => {
   function setup () {
     const win = new EventTarget()
@@ -190,9 +229,11 @@ describe('level meter and diagnostics', () => {
       player: { posted: 42 },
       win: { navigator: { userAgent: 'TestBrowser/1', audioSession: { type: 'playback' }, serviceWorker: { controller: {} } }, isSecureContext: true }
     })
-    for (const expected of ['TestBrowser/1', 'suspended', '48000 Hz', 'playback', 'ready (Monochord)', 'Tap again', 'events sent: 42', 'dropped by the plugin: 1']) {
+    for (const expected of ['TestBrowser/1', 'suspended', 'output channels', '48000 Hz', 'playback', 'ready (Monochord)', 'Tap again', 'events sent: 42', 'dropped by the plugin: 1']) {
       expect(text).toContain(expected)
     }
+    const brave = diagnosticsText({ engine: { context: null }, session: { status: { state: 'idle', message: '' }, iri: 'x', error: null, diagnostics: { dropped: 0, processorError: null } }, player: { posted: 0 }, win: { navigator: { userAgent: 'Chrome', brave: {} }, isSecureContext: true } })
+    expect(brave).toContain('(Brave)')
     expect(diagnosticsText({ engine: { context: null }, session: { status: { state: 'idle', message: '' }, iri: 'x', error: null, diagnostics: { dropped: 0, processorError: null } }, player: { posted: 0 }, win: { navigator: {}, isSecureContext: false } }))
       .toContain('not started yet')
   })

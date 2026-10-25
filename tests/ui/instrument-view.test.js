@@ -22,7 +22,7 @@ function session (overrides = {}) {
 }
 
 function setup () {
-  const handlers = { onChoose: vi.fn(), onParam: vi.fn(), onReset: vi.fn(), onAudition: vi.fn(), onEnable: vi.fn() }
+  const handlers = { onChoose: vi.fn(), onParam: vi.fn(), onReset: vi.fn(), onAudition: vi.fn(), onEnable: vi.fn(), onTestTone: vi.fn() }
   const view = createInstrumentView(handlers)
   document.body.replaceChildren(view.el)
   return { view, handlers }
@@ -174,6 +174,14 @@ describe('instrument view', () => {
 })
 
 describe('audio diagnostics', () => {
+  it('has a test beep that does not go through the instrument', () => {
+    const { view, handlers } = setup()
+    const beep = [...view.el.querySelectorAll('.diagnostics button')].find(b => b.textContent === 'Play a test beep')
+    beep.click()
+    expect(handlers.onTestTone).toHaveBeenCalledTimes(1)
+    expect(view.el.querySelector('.diagnostics').textContent).toMatch(/does not use the instrument/)
+  })
+
   it('opens on demand, reports toggles, and shows the text and level', () => {
     const { view } = setup()
     const toggles = []

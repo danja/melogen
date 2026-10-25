@@ -32,7 +32,7 @@ describe('Controller', () => {
     expect(vm.populationSize).toBe(20)
     expect(vm.canEvolve).toBe(false)
     expect(vm.canMore).toBe(true)
-    expect(vm.settings.bars).toBe(8)
+    expect(vm.settings.bars).toBe(4)
   })
 
   it('voting toggles: the same vote again clears it', () => {
@@ -62,6 +62,21 @@ describe('Controller', () => {
     expect(controller.viewModel().rows).toHaveLength(5)
   })
 
+  it('after Evolve only the kept elite carries a vote; everything else starts unrated', () => {
+    const { controller } = setup()
+    controller.vote(0, 1)
+    controller.vote(1, 1)
+    controller.vote(2, -1)
+    controller.evolve()
+    const rows = controller.viewModel().rows
+    const withVote = rows.filter(r => r.rating !== null)
+    expect(withVote).toHaveLength(1)
+    expect(withVote[0]).toMatchObject({ rating: 1, carried: true, origin: 'elite' })
+    // And it is a vote the person can clear, which leaves a normal unrated melody.
+    controller.vote(withVote[0].position, 1)
+    expect(controller.viewModel().rows[withVote[0].position].rating).toBe(null)
+  })
+
   it('Evolve is ignored until something is voted', () => {
     const { controller } = setup()
     controller.evolve()
@@ -79,10 +94,13 @@ describe('Controller', () => {
 
   it('changing the bar count resizes the population, keeping it', () => {
     const { controller } = setup()
-    const id = controller.viewModel().rows[0].id
-    controller.setSettings({ bars: 4 })
     expect(controller.population.entries.every(e => e.genome.kind.length === 64)).toBe(true)
+    const id = controller.viewModel().rows[0].id
+    controller.setSettings({ bars: 2 })
+    expect(controller.population.entries.every(e => e.genome.kind.length === 32)).toBe(true)
     expect(controller.viewModel().rows[0].id).toBe(id)
+    controller.setSettings({ bars: 6 })
+    expect(controller.population.entries.every(e => e.genome.kind.length === 96)).toBe(true)
   })
 
   it('a time signature change needs confirmation, then starts a new population', () => {
@@ -92,7 +110,7 @@ describe('Controller', () => {
     controller.vote(0, 1)
     expect(controller.setSettings({ timeSignature: '3/4' }, { confirmed: true })).toEqual({ ok: true })
     expect(controller.settings.timeSignature).toBe('3/4')
-    expect(controller.population.entries[0].genome.kind).toHaveLength(8 * 12)
+    expect(controller.population.entries[0].genome.kind).toHaveLength(4 * 12)
     expect(controller.viewModel().canEvolve).toBe(false)
     expect(controller.viewModel().generation).toBe(0)
     expect(controller.viewModel().rows).toHaveLength(5)
@@ -108,7 +126,7 @@ describe('Controller', () => {
     expect(header.ppq).toBe(480)
     const tempo = events.find(e => e.meta === 0x51)
     expect(tempo.data[0] * 65536 + tempo.data[1] * 256 + tempo.data[2]).toBe(Math.round(60000000 / 90))
-    expect(events.at(-1).tick).toBe(128 * 120)
+    expect(events.at(-1).tick).toBe(64 * 120) // 4 bars of 16 steps
     expect(events.some(e => e.kind === 0x90)).toBe(true)
     expect(controller.midiAt(9)).toBe(null)
   })

@@ -136,6 +136,9 @@ button, input, select { font: inherit; color: inherit; }
 
 .row.playing { border-color: var(--play); }
 .row.carried { border-style: dashed; }
+/* A vote carried over from the last generation is outlined, not filled like one you just cast. */
+.row.carried .vote[aria-pressed="true"] { background: transparent; border: 2px solid currentColor; }
+.row.carried .vote-up[aria-pressed="true"] { color: var(--up); }
 
 .play {
   grid-area: play;
@@ -267,7 +270,7 @@ button, input, select { font: inherit; color: inherit; }
 .mini svg { width: 18px; height: 18px; }
 
 @media (min-width: 34rem) {
-  .row { grid-template-columns: 56px 5rem 1fr auto; grid-template-areas: "play info votes download"; }
+  .row { grid-template-columns: 56px 7rem 1fr auto; grid-template-areas: "play info votes download"; }
 }
 
 .diagnostics { margin-top: 1.5rem; color: var(--muted); font-size: 0.92rem; }

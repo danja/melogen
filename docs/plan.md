@@ -384,7 +384,7 @@ Each phase ends with its tests passing and every file under 500 lines.
   rows. Each row has ▶ Play/■ Stop (green), − 0 + as a segmented toggle (tap again to clear), and ⬇ Download. Below the
   rows: **More** (5 more from this generation), **Evolve** and **New population**. Evolve is disabled until at least one
   vote is cast.
-- **Settings tab:** Mode (Melody/Bass), key root, scale, octave, bars (default 8), time signature (4/4, 3/4, 6/8, 5/4,
+- **Settings tab:** Mode (Melody/Bass), key root, scale, octave, bars (default 4), time signature (4/4, 3/4, 6/8, 5/4,
   7/8), tempo (default 120), crossover rate (0.7), mutation rate (0.1), population size (20), Loop playback. The
   confirmation for a time-signature change happens here.
 - **Instrument tab:** at the top, the plugin picker: a catalogue select, a custom IRI field with a Load button, and the

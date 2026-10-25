@@ -82,8 +82,8 @@ export function createInteractView (handlers) {
       }
       parts.playButton.setAttribute('aria-label', `${data.playing ? 'Stop' : 'Play'} melody ${position + 1}`)
       parts.playButton.setAttribute('aria-pressed', String(data.playing))
-      parts.origin.textContent = data.carried ? 'kept · liked' : ORIGIN_LABEL[data.origin] ?? ''
-      parts.origin.title = data.parents.length ? `from ${data.parents.join(' × ')}` : data.id
+      parts.origin.textContent = data.carried ? 'carried over' : ORIGIN_LABEL[data.origin] ?? ''
+      parts.origin.title = data.carried ? 'Your best from the last generation, carried over unchanged. Its + stands unless you change it.' : data.parents.length ? `from ${data.parents.join(' × ')}` : data.id
       for (const button of parts.votes.children) {
         button.setAttribute('aria-pressed', String(data.rating !== null && Number(button.dataset.rating) === data.rating))
       }
