@@ -27,6 +27,16 @@ export function createInstrumentView (handlers) {
   const reset = h('button', { class: 'action quiet', type: 'button', onClick: () => handlers.onReset() }, icon('reset'), ' Reset controls')
   const enable = h('button', { class: 'action primary', type: 'button', onClick: () => handlers.onEnable() }, 'Enable audio')
 
+  const diagnostics = h('details', { class: 'diagnostics' },
+    h('summary', {}, 'Audio diagnostics'),
+    h('p', { class: 'help' }, 'If there is no sound: the level bar should move while a melody plays. If it moves, the instrument is working and the sound is lost after it (volume, silent switch, output device). If it stays flat, the instrument is not producing sound.'),
+    h('label', { class: 'level-label' }, 'Output level ', h('meter', { min: 0, max: 1, value: 0, 'aria-label': 'Output level' })),
+    h('pre', { class: 'diagnostics-text', tabindex: '0' }))
+  const levelMeter = diagnostics.querySelector('meter')
+  const diagnosticsText = diagnostics.querySelector('pre')
+  const toggleListeners = []
+  diagnostics.addEventListener('toggle', () => { for (const listener of toggleListeners) listener(diagnostics.open) })
+
   const el = h('section', { class: 'instrument' },
     h('div', { class: 'field' },
       h('label', { for: 'plugin-select' }, 'Instrument'),
@@ -36,7 +46,7 @@ export function createInstrumentView (handlers) {
       h('div', { class: 'control' }, custom, loadCustom)),
     status, error, enable, about,
     h('div', { class: 'actions' }, audition, reset),
-    controls)
+    controls, diagnostics)
 
   let shownProfile = null
   const widgets = new Map() // symbol -> { port, update(value) }
@@ -130,5 +140,13 @@ export function createInstrumentView (handlers) {
     for (const [symbol, widget] of widgets) widget.update(session.values[symbol] ?? widget.port.default)
   }
 
-  return { el, render }
+  return {
+    el,
+    render,
+    onDiagnosticsToggle: listener => { toggleListeners.push(listener) },
+    renderDiagnostics (text, level) {
+      diagnosticsText.textContent = text
+      levelMeter.value = Math.min(1, level ?? 0)
+    }
+  }
 }

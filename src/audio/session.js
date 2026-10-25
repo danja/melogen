@@ -25,6 +25,7 @@ export class InstrumentSession {
     this.catalogueError = null
     this.listeners = new Set()
     this.pending = null
+    this.diagnostics = { dropped: 0, processorError: null }
   }
 
   subscribe (listener) {
@@ -37,6 +38,26 @@ export class InstrumentSession {
   setStatus (state, message = '') {
     this.status = { state, message }
     this.emit()
+  }
+
+  /** Call inside a tap: starts audio. Resolves true once the browser lets it run. */
+  unlock () { return this.engine.unlock() }
+
+  /** Tell the person something (an error line) without a load having failed. */
+  notify (message) {
+    this.error = message
+    this.emit()
+  }
+
+  clearNotice () {
+    if (this.error === null) return
+    this.error = null
+    this.emit()
+  }
+
+  handleProcessorMessage (message) {
+    if (message?.type === 'dropped') this.diagnostics.dropped += message.count ?? 0
+    if (message?.type === 'error') this.diagnostics.processorError = message.message ?? 'error'
   }
 
   get ready () { return this.status.state === 'ready' && this.engine.current !== null }
@@ -64,7 +85,10 @@ export class InstrumentSession {
     this.setStatus('loading', `Loading ${target}`)
     const run = async () => {
       try {
-        const plugin = await this.engine.load(target)
+        const plugin = await this.engine.load(target, {
+          onStatus: text => this.setStatus('loading', text),
+          onMessage: message => this.handleProcessorMessage(message)
+        })
         this.iri = target
         this.profile = plugin.profile
         this.values = mergeValues(plugin.profile.ports, loadValues(this.storage, target))

@@ -12,6 +12,8 @@ import { createSettingsView } from './ui/settings-view.js'
 import { createInstrumentView } from './ui/instrument-view.js'
 import { downloadBytes } from './ui/download.js'
 import { attachKeyboard } from './keyboard.js'
+import { installUnlock } from './audio/unlock.js'
+import { diagnosticsText } from './diagnostics.js'
 
 /**
  * @param options { root, storage, search, win, fetchImpl, AudioContextImpl }
@@ -51,7 +53,7 @@ export function createApp ({
     onParam: (symbol, value) => session.setValue(symbol, value),
     onReset: () => session.resetValues(),
     onAudition: async () => { if (await session.ensure()) player.audition() },
-    onEnable: () => session.ensure()
+    onEnable: () => { session.unlock(); session.ensure() }
   })
 
   const tabs = createTabs({
@@ -77,11 +79,21 @@ export function createApp ({
   session.subscribe(render)
   render()
 
-  // The audio context may only start from a gesture, so the first touch of
-  // the page starts loading the instrument; Play then finds it ready.
-  const warm = () => { session.ensure() }
-  win.addEventListener('pointerdown', warm, { once: true, capture: true })
-  win.addEventListener('keydown', warm, { once: true, capture: true })
+  // The audio context may only start from a gesture, and which events count differs by
+  // browser, so every gesture tries until it runs. The first also starts loading the
+  // instrument, so Play finds it ready.
+  const removeUnlock = installUnlock(win, session)
+
+  // The diagnostics refresh only while they are open.
+  let diagnosticsTimer = null
+  function refreshDiagnostics () {
+    instrument.renderDiagnostics(diagnosticsText({ engine, session, player, win }), engine.level())
+  }
+  instrument.onDiagnosticsToggle(open => {
+    clearInterval(diagnosticsTimer)
+    diagnosticsTimer = open ? setInterval(refreshDiagnostics, 250) : null
+    if (open) refreshDiagnostics()
+  })
 
   session.loadCatalogue()
   const detachKeyboard = attachKeyboard(win.document, { controller, tabs })
@@ -89,8 +101,8 @@ export function createApp ({
   /** Stop playback and remove every listener this app added to the page. */
   function dispose () {
     player.stop()
-    win.removeEventListener('pointerdown', warm, { capture: true })
-    win.removeEventListener('keydown', warm, { capture: true })
+    removeUnlock()
+    clearInterval(diagnosticsTimer)
     detachKeyboard()
   }
 

@@ -29,6 +29,7 @@ export class Player {
     this.session = null
     this.timer = null
     this.cleanupUntil = 0
+    this.posted = 0 // events sent to the plugin, for diagnostics
   }
 
   get playingKey () { return this.session?.key ?? null }
@@ -74,7 +75,7 @@ export class Player {
     for (;;) {
       const batch = []
       while (s.next < s.events.length && s.events[s.next].frame < horizon) batch.push(s.events[s.next++])
-      if (batch.length > 0) node.port.postMessage({ type: 'events', events: batch })
+      if (batch.length > 0) { node.port.postMessage({ type: 'events', events: batch }); this.posted += batch.length }
       if (s.next < s.events.length || !s.loop) break
       s.cycleStart = s.cycleEnd
       s.cycleEnd += s.length

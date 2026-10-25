@@ -173,6 +173,27 @@ describe('instrument view', () => {
   })
 })
 
+describe('audio diagnostics', () => {
+  it('opens on demand, reports toggles, and shows the text and level', () => {
+    const { view } = setup()
+    const toggles = []
+    view.onDiagnosticsToggle(open => toggles.push(open))
+    const details = view.el.querySelector('details.diagnostics')
+    details.open = true
+    details.dispatchEvent(new Event('toggle'))
+    details.open = false
+    details.dispatchEvent(new Event('toggle'))
+    expect(toggles).toEqual([true, false])
+    view.renderDiagnostics('audio: running', 0.42)
+    expect(view.el.querySelector('.diagnostics-text').textContent).toBe('audio: running')
+    expect(view.el.querySelector('meter').value).toBeCloseTo(0.42)
+    view.renderDiagnostics('x', null)
+    expect(view.el.querySelector('meter').value).toBe(0)
+    view.renderDiagnostics('x', 7)
+    expect(view.el.querySelector('meter').value).toBe(1)
+  })
+})
+
 describe('slider mapping', () => {
   const port = (minimum, maximum, properties = []) => ({ minimum, maximum, properties, scalePoints: [] })
 

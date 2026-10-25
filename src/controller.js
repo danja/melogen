@@ -164,9 +164,16 @@ export class Controller {
     if (this.player.playingKey === position) { this.player.stop(); return }
     const melody = this.melodyAt(position)
     if (!melody) return
+    // Inside the tap, before any await: browsers only start audio from a gesture.
+    const unlocked = this.session.unlock()
     this.player.stop()
     const ready = await this.session.ensure()
     if (!ready) return
+    if (!(await unlocked)) {
+      this.session.notify('Your browser has not started audio yet. Tap Play again.')
+      return
+    }
+    this.session.clearNotice()
     this.player.play(position, melody, { loop: this.settings.loop })
   }
 

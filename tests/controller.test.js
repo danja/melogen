@@ -5,11 +5,18 @@ import { STATE_KEY } from '../src/state/store.js'
 import { readSmf } from './midi/smf-reader.js'
 import { fakeStorage, throwingStorage, fakeContext, fakeNodeClass } from './audio/fakes.js'
 
-function setup ({ storage = fakeStorage(), ready = true, seed = 5 } = {}) {
+function setup ({ storage = fakeStorage(), ready = true, seed = 5, unlocked = true } = {}) {
   const context = fakeContext()
   const node = new (fakeNodeClass())(context, 'x', {})
   const player = new Player({ getEngine: () => ({ context, node }), timers: { set: () => 1, clear: () => {} } })
-  const session = { ensure: vi.fn(async () => ready) }
+  const calls = []
+  const session = {
+    ensure: vi.fn(async () => { calls.push('ensure'); return ready }),
+    unlock: vi.fn(() => { calls.push('unlock'); return Promise.resolve(unlocked) }),
+    notify: vi.fn(),
+    clearNotice: vi.fn()
+  }
+  session.calls = calls
   const saves = []
   const timers = { set: fn => { saves.push(fn); return saves.length }, clear: () => {} }
   const controller = new Controller({ storage, session, player, seed, timers })
@@ -116,6 +123,29 @@ describe('Controller', () => {
     await controller.togglePlay(1)
     expect(player.playingKey).toBe(null)
     expect(controller.viewModel().rows[1].playing).toBe(false)
+  })
+
+  it('starts audio inside the tap, before anything is awaited', async () => {
+    const { controller, session } = setup()
+    const pending = controller.togglePlay(2)
+    expect(session.unlock).toHaveBeenCalledTimes(1) // synchronously, in the click handler
+    expect(session.ensure).toHaveBeenCalledTimes(1)
+    expect(session.calls).toEqual(['unlock', 'ensure'])
+    await pending
+  })
+
+  it('if the browser has not started audio, says so and does not play', async () => {
+    const { controller, session, player } = setup({ unlocked: false })
+    await controller.togglePlay(0)
+    expect(player.playingKey).toBe(null)
+    expect(session.notify).toHaveBeenCalledWith(expect.stringMatching(/Tap Play again/))
+    expect(session.clearNotice).not.toHaveBeenCalled()
+  })
+
+  it('clears an earlier notice when playback does start', async () => {
+    const { controller, session } = setup()
+    await controller.togglePlay(0)
+    expect(session.clearNotice).toHaveBeenCalled()
   })
 
   it('does not play when the instrument cannot load', async () => {

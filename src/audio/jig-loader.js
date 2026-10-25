@@ -97,7 +97,7 @@ function waitForReady (node, message, transfer, timeoutMs, name) {
 /**
  * @param iri the plugin's IRI
  * @param context an AudioContext
- * @param options { fetchImpl, AudioWorkletNodeImpl, offered, readyTimeout, onMessage, createObjectURL }
+ * @param options { fetchImpl, AudioWorkletNodeImpl, offered, readyTimeout, onMessage, onStatus, createObjectURL }
  * @returns { node, profile, dispose }
  */
 export async function loadPlugin (iri, context, options = {}) {
@@ -107,9 +107,11 @@ export async function loadPlugin (iri, context, options = {}) {
     offered = offeredCapabilities(),
     readyTimeout = READY_TIMEOUT_MS,
     onMessage = () => {},
+    onStatus = () => {},
     createObjectURL = bytes => URL.createObjectURL(new Blob([bytes], { type: 'text/javascript' }))
   } = options
 
+  onStatus('Fetching the instrument\u2019s profile')
   const { text, base } = await fetchProfile(iri, fetchImpl)
 
   let profile
@@ -132,6 +134,7 @@ export async function loadPlugin (iri, context, options = {}) {
     throw new PluginLoadError('requirements', `${profile.label} produces no audio, so it cannot be played as an instrument`)
   }
 
+  onStatus(`Fetching and checking ${profile.label}`)
   const [processorBytes, moduleBytes, ...assetBytes] = await Promise.all([
     fetchVerified(profile.processor, 'processor', fetchImpl),
     profile.module ? fetchVerified(profile.module, 'module', fetchImpl) : null,
@@ -146,6 +149,7 @@ export async function loadPlugin (iri, context, options = {}) {
       `a different processor named "${name}" is already registered in this audio context; reload the page to use ${profile.label}`)
   }
   if (!known.has(name)) {
+    onStatus('Registering the audio processor')
     const url = createObjectURL(processorBytes)
     try {
       await context.audioWorklet.addModule(url)
@@ -176,6 +180,7 @@ export async function loadPlugin (iri, context, options = {}) {
   }
   const transfer = [...(module ? [module] : []), ...Object.values(assets)]
 
+  onStatus(`Starting ${profile.label}`)
   try {
     await waitForReady(node, message, transfer, readyTimeout, name)
   } catch (error) {
