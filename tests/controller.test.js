@@ -30,6 +30,7 @@ describe('Controller', () => {
     expect(vm.generation).toBe(0)
     expect(vm.rows).toHaveLength(5)
     expect(vm.populationSize).toBe(20)
+    expect(vm.totalRounds).toBe(4) // twenty melodies, five at a time
     expect(vm.canEvolve).toBe(false)
     expect(vm.canMore).toBe(true)
     expect(vm.settings.bars).toBe(4)

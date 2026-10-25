@@ -7,3 +7,6 @@ export const CATALOGUE_URL = 'https://strandz.it/jigdaw/plugins/index.json'
 
 // Linked from the page header.
 export const REPO_URL = 'https://github.com/danja/melogen'
+
+// The Jig plugin format specification, linked from the About tab.
+export const JIG_SPEC_URL = 'https://danja.github.io/jigdaw/'

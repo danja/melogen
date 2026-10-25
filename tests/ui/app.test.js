@@ -64,9 +64,9 @@ afterEach(() => {
 })
 
 describe('app', () => {
-  it('boots with three tabs, five rows, and the default plugin stored on first load', () => {
+  it('boots with four tabs, five rows, and the default plugin stored on first load', () => {
     boot()
-    expect([...document.querySelectorAll('[role=tab]')].map(t => t.textContent)).toEqual(['Interact', 'Settings', 'Instrument'])
+    expect([...document.querySelectorAll('[role=tab]')].map(t => t.textContent)).toEqual(['Interact', 'Settings', 'Instrument', 'About'])
     expect(document.querySelectorAll('.row:not([hidden])')).toHaveLength(5)
     expect(storage.map.get(PLUGIN_KEY)).toBe(DEFAULT_PLUGIN)
     expect(document.querySelector('.run-title').textContent).toBe('Generation 1')
@@ -116,6 +116,10 @@ describe('app', () => {
     document.querySelector('.row .play').click()
     await until(() => app.player.playingKey === 0, 'playing')
     expect(document.querySelector('.row').classList.contains('playing')).toBe(true)
+    // The melody is random and may open with a rest, so let the (fake) clock reach well into it
+    // before asking whether its notes were sent. Without this the test depended on the melody.
+    app.engine.context.currentTime = 2
+    app.player.tick()
     expect(Node.instances[0].posted.some(p => p.message.type === 'events')).toBe(true)
 
     document.querySelector('.row .play').click()
@@ -151,7 +155,7 @@ describe('app', () => {
     ;[...document.querySelectorAll('.action')].find(b => b.textContent === 'More').click()
     const second = app.controller.viewModel().rows.map(r => r.id)
     expect(second.some(id => first.includes(id))).toBe(false)
-    expect(document.querySelector('.run-progress').textContent).toMatch(/Round 2/)
+    expect(document.querySelector('.run-progress').textContent).toMatch(/Round 2 of 4/)
   })
 
   it('Download hands over a .mid file named for the melody', () => {

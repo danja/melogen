@@ -10,6 +10,7 @@ import { createTabs } from './ui/tabs.js'
 import { createInteractView } from './ui/interact-view.js'
 import { createSettingsView } from './ui/settings-view.js'
 import { createInstrumentView } from './ui/instrument-view.js'
+import { createAboutView } from './ui/about-view.js'
 import { downloadBytes } from './ui/download.js'
 import { attachKeyboard } from './keyboard.js'
 import { installUnlock } from './audio/unlock.js'
@@ -69,7 +70,8 @@ export function createApp ({
     tabs: [
       { id: 'interact', label: 'Interact', panel: interact.el },
       { id: 'settings', label: 'Settings', panel: settings.el },
-      { id: 'instrument', label: 'Instrument', panel: instrument.el }
+      { id: 'instrument', label: 'Instrument', panel: instrument.el },
+      { id: 'about', label: 'About', panel: createAboutView().el }
     ]
   })
 

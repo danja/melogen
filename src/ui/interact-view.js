@@ -17,6 +17,8 @@ const VOTES = [[-1, '−', 'Dislike', 'down'], [0, '0', 'Neutral', 'zero'], [1, 
  * @param handlers { onPlay(position), onVote(position, rating), onDownload(position), onMore, onEvolve, onNew }
  */
 export function createInteractView (handlers) {
+  const intro = h('p', { class: 'intro' },
+    'Play each melody and vote \u2212 0 +. More brings the next five; Evolve breeds a new generation from your votes.')
   const title = h('h2', { class: 'run-title' })
   const progress = h('p', { class: 'run-progress' })
   // Never `hidden`: the line keeps its space, so the status appearing while the
@@ -54,7 +56,7 @@ export function createInteractView (handlers) {
     armed = setTimeout(() => { armed = null; fresh.textContent = 'New population' }, 3000)
   })
 
-  const el = h('section', { class: 'interact' }, title, progress, notice, list,
+  const el = h('section', { class: 'interact' }, intro, title, progress, notice, list,
     h('div', { class: 'actions' }, more, evolve), h('div', { class: 'actions' }, fresh))
 
   /**
@@ -63,7 +65,7 @@ export function createInteractView (handlers) {
    */
   function render (vm, audio = { state: 'idle', message: '', error: null }) {
     title.textContent = `Generation ${vm.generation + 1}`
-    progress.textContent = `Round ${Math.max(vm.round, 1)} · ${vm.ratedCount} of ${vm.populationSize} rated`
+    progress.textContent = `Round ${Math.max(vm.round, 1)} of ${vm.totalRounds} · ${vm.ratedCount} of ${vm.populationSize} rated`
 
     rowEls.forEach((parts, position) => {
       const data = vm.rows[position]

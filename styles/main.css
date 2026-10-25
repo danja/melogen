@@ -99,6 +99,11 @@ button, input, select { font: inherit; color: inherit; }
 
 .tab {
   flex: 1;
+  min-width: 0;
+  padding: 0;
+  white-space: nowrap;
+  /* Four tabs share the width; the text shrinks to fit a narrow phone rather than being clipped. */
+  font-size: clamp(0.74rem, 3.4vw, 0.95rem);
   min-height: 44px;
   border: 0;
   border-radius: 9px;
@@ -113,6 +118,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* ---- interact ---- */
 
+.intro { margin: 0 0 1rem; color: var(--muted); font-size: 0.95rem; }
 .run-title { margin: 0; font-size: 1.15rem; }
 .run-progress { margin: 0.1rem 0 0.9rem; color: var(--muted); font-size: 0.9rem; }
 
@@ -282,3 +288,11 @@ button, input, select { font: inherit; color: inherit; }
 .level-label meter { flex: 1; height: 1rem; }
 .diagnostics-text { white-space: pre-wrap; overflow-wrap: anywhere; padding: 0.7rem; border-radius: 8px; background: var(--surface-2); font-size: 0.8rem; user-select: all; }
 .beep-status { min-height: 1.4rem; margin: 0.4rem 0; color: var(--text); }
+
+/* ---- about ---- */
+
+.about-page h2 { margin: 1.5rem 0 0.4rem; font-size: 1.1rem; }
+.about-page p, .about-page li { margin: 0 0 0.6rem; }
+.about-page ol, .about-page ul { padding-left: 1.3rem; margin: 0; }
+.about-page .lead { font-size: 1.05rem; }
+.about-page a { color: var(--accent); }

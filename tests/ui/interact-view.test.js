@@ -5,7 +5,7 @@ import { createInteractView, ROWS } from '../../src/ui/interact-view.js'
 function vm (overrides = {}) {
   return {
     settings: { loop: false },
-    generation: 0, round: 1, populationSize: 20, ratedCount: 0, duration: 16,
+    generation: 0, round: 1, totalRounds: 4, populationSize: 20, ratedCount: 0, duration: 16,
     canMore: true, canEvolve: false,
     rows: Array.from({ length: ROWS }, (_, position) => ({
       position, id: `g0-${position}`, rating: null, carried: false, origin: 'random', parents: [], playing: false
@@ -118,7 +118,17 @@ describe('interact view', () => {
     const { view } = setup()
     view.render(vm({ generation: 3, round: 2, ratedCount: 7 }))
     expect(view.el.querySelector('.run-title').textContent).toBe('Generation 4')
-    expect(view.el.querySelector('.run-progress').textContent).toBe('Round 2 · 7 of 20 rated')
+    expect(view.el.querySelector('.run-progress').textContent).toBe('Round 2 of 4 · 7 of 20 rated')
+  })
+
+  it('explains what to do, in one short line at the top', () => {
+    const { view } = setup()
+    const intro = view.el.querySelector('.intro')
+    expect(view.el.firstElementChild).toBe(intro)
+    expect(intro.textContent).toMatch(/vote/)
+    expect(intro.textContent).toMatch(/More/)
+    expect(intro.textContent).toMatch(/Evolve/)
+    expect(intro.textContent.length).toBeLessThan(140)
   })
 
   it('marks a carried elite as kept', () => {

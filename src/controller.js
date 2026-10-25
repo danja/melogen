@@ -8,6 +8,7 @@ import { createRng } from './util/rng.js'
 import { decode } from './music/decode.js'
 import { stepSeconds, stepsPerBar } from './music/timing.js'
 import { writeSmf } from './midi/smf.js'
+import { DEFAULTS } from './ga/constants.js'
 import { DEFAULT_SETTINGS, applyChange, describeChange } from './state/settings.js'
 import { loadState, saveState, clearState } from './state/store.js'
 
@@ -204,6 +205,7 @@ export class Controller {
       settings: this.settings,
       generation: pop.generation,
       round: pop.round,
+      totalRounds: Math.ceil(pop.entries.length / DEFAULTS.K),
       populationSize: pop.entries.length,
       duration: this.settings.bars * stepsPerBar(this.settings.timeSignature) * stepSeconds(this.settings.tempo),
       ratedCount: pop.ratedCount,

@@ -19,6 +19,7 @@ It is a responsive PWA in vanilla ES modules, with no runtime dependencies and n
    mutation rate, population size, loop. Changing the time signature starts a new population (it asks first).
 3. **Instrument.** Pick any instrument from the jigdaw catalogue, or paste the address of any Jig plugin. The controls are
    built from the plugin's own description. Your choice and its settings are remembered.
+4. **About.** What it is, how it works, and links to the Jig specification and the source.
 
 The session (settings, votes, population) is kept in `localStorage`. After the first visit the app works offline.
 
